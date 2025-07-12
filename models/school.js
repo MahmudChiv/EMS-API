@@ -3,7 +3,8 @@ const sequelize = require("../config/db");
 
 const School = sequelize.define("School", {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
   schoolName: {
@@ -22,7 +23,7 @@ const School = sequelize.define("School", {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
-      is: /^\+?[1-9]\d{1,14}$/, // Validates international phone numbers
+      is: /^(\+234|0)[789][01]\d{8}$/, // Validates international phone numbers
     },
   },
   schoolEmail: {
@@ -33,13 +34,13 @@ const School = sequelize.define("School", {
       isEmail: true,
     },
   },
-    schoolLogo: {
+  schoolLogo: {
     type: DataTypes.STRING,
     allowNull: true,
     validate: {
-        isUrl: true, // Validates that the logo is a valid URL
-        },
+      isUrl: true, // Validates that the logo is a valid URL
     },
+  },
 });
 
 // Sync the model with the database

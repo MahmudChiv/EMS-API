@@ -5,7 +5,8 @@ const sequelize = require("../config/db");
 
 const SubjectClass = sequelize.define("SubjectClass", {
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
   subject: {
@@ -17,11 +18,11 @@ const SubjectClass = sequelize.define("SubjectClass", {
     allowNull: false,
   },
   teacherId: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'Teachers',
-      key: 'id',
+      model: "Teachers",
+      key: "id",
     },
   },
 });
@@ -32,10 +33,6 @@ SubjectClass.associate = (models) => {
     foreignKey: "teacherId",
     as: "teacher",
   });
-//   SubjectClass.belongsTo(models.Class, {
-//     foreignKey: "classId",
-//     as: "class",
-//   });
 }
 
 // Sync the model with the database

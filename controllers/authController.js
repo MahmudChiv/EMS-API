@@ -9,7 +9,7 @@ const sendLoginEmail = require("../utils/emailService").sendLoginEmail;
 require("dotenv").config();
 const generator = require("generate-password");
 const jwt = require("jsonwebtoken");
-const { UUID } = require("sequelize");
+const { v4: uuidv4 } = require("uuid");
 
 exports.registerSchool = async (req, res) => {
   const {
@@ -39,7 +39,7 @@ exports.registerSchool = async (req, res) => {
     return res.status(400).json({ message: "School already exists" });
 
   const newSchool = await School.create({
-    id: UUID.v4(), // Generate a unique ID for the school
+    id: uuidv4(), // Generate a unique ID for the school
     schoolName,
     schoolType,
     schoolAddress,
@@ -54,13 +54,14 @@ exports.registerSchool = async (req, res) => {
       });
     })
     .catch((error) => {
-      console.error("Error registering school:", error);
+      console.log("Error registering school:", error);
       return res.status(500).json({ message: "Error registering school" });
     });
 };
 
 exports.registerAdmin = async (req, res) => {
-  const { schoolId, adminName, adminPassword, adminEmail } = req.body;
+  const { schoolId, adminName, adminEmail, adminPhone, adminPassword } =
+    req.body;
 
   // Validate required fields
   if (!schoolId || !adminName || !adminEmail || !adminPhone || !adminPassword) {
@@ -72,13 +73,22 @@ exports.registerAdmin = async (req, res) => {
   if (!school) {
     return res.status(404).json({ message: "School not found" });
   }
+  // Check if the admin email already exists
+  const existingAdmin = await Admin.findOne({
+    where: { adminEmail: adminEmail, schoolId: schoolId },
+  });
+  if (existingAdmin) {
+    return res
+      .status(400)
+      .json({ message: "Admin already exists for this school" });
+  }
 
   // Hash the password
   const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
   // Create the admin
   const newAdmin = await Admin.create({
-    id: UUID.v4(), // Generate a unique ID for the admin
+    id: uuidv4(), // Generate a unique ID for the admin
     schoolId,
     adminName,
     adminEmail,
@@ -100,36 +110,44 @@ exports.handleAdminLogin = async (req, res) => {
     return res.status(404).json({ message: "Admin not found" });
   }
 
-  const isPasswordValid = await bcrypt.compare(password, admin.adminPassword);
-  if (!isPasswordValid) {
-    return res.status(401).json({ message: "Invalid password" });
-  }
-
-  // Implemet jwt
-  const token = jwt.sign(
-    { id: admin.id, role: "admin" },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "1h",
+  try {
+    // Check if the admin is associated with a school
+    const isPasswordValid = await bcrypt.compare(password, admin.adminPassword);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid password" });
     }
-  );
 
-  return res.status(200).json({
-    token, // Return the JWT token
-    message: "Login successful",
-    admin,
-  });
+    // Implemet jwt
+    const token = jwt.sign(
+      { id: admin.id, role: "admin" },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
+
+    return res.status(200).json({
+      token, // Return the JWT token
+      message: "Login successful",
+      admin,
+    });
+  } catch (error) {
+    console.log("Login error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 exports.inviteTeachers = async (req, res) => {
-  if (req.role !== "admin") {
+  if (req.user.role !== "admin") {
     return res
       .status(403)
       .json({ message: "Access denied, you're not an admin!" });
   }
+
   if (!req.file) {
     return res.status(400).send("No file uploaded");
   }
+
   const results = [];
   fs.createReadStream(req.file.path)
     .pipe(csv())
@@ -151,23 +169,23 @@ exports.inviteTeachers = async (req, res) => {
           console.log(hashedPassword);
 
           await Teacher.create({
-            id: UUID.v4(), // Generate a unique ID for the teacher
+            id: uuidv4(), // Generate a unique ID for the teacher
             email: row.email,
             password: hashedPassword, // Store the hashed password
           }).catch((error) => {
-            console.error("Error saving teacher:", error);
+            console.log("Error saving teacher:", error);
             return res.status(500).send("Error saving teacher to DB");
           });
           // Send login invite email to the teacher
           await sendLoginEmail(row.email, hashedPassword);
         }
 
-        await Teacher.sync(); // Ensure the Teacher model is synced with the database
-        fs.unlinkSync(req.file.path); // Delete the uploaded file after processing
+        await Teacher.sync();
+        fs.unlinkSync(req.file.path);
 
         res.status(201).send("Invites sent successfully");
       } catch (err) {
-        console.error(err);
+        console.log(err);
         res.status(500).send("Error sending invites");
       }
     });
@@ -187,7 +205,7 @@ exports.handleLogin = async (req, res) => {
     else if (role === "student")
       return await handleStudentLogin(email, password, res);
   } catch (error) {
-    console.error("Login error:", error);
+    console.log("Login error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -223,12 +241,13 @@ exports.updateTeacherInfo = async (req, res) => {
       teacher,
     });
   } catch (error) {
-    console.error("Error updating teacher information:", error);
+    console.log("Error updating teacher information:", error);
     return res
       .status(500)
       .json({ message: "Error updating teacher information" });
   }
 };
+
 // This function is used to set up the teacher's subjects and classes
 
 exports.teacherSubjectSetup = async (req, res) => {
@@ -272,7 +291,7 @@ exports.teacherSubjectSetup = async (req, res) => {
       subjectClasses: subjectClassPairs,
     });
   } catch (error) {
-    console.error("Error setting up subjects and classes:", error);
+    console.log("Error setting up subjects and classes:", error);
     return res
       .status(500)
       .json({ message: "Error setting up subjects and classes" });
@@ -330,7 +349,7 @@ const handleStudentLogin = async (email, password, res) => {
 //     const schools = await School.findAll();
 //     return res.status(200).json(schools);
 //   } catch (error) {
-//     console.error("Error fetching schools:", error);
+//     console.log("Error fetching schools:", error);
 //     return res.status(500).json({ message: "Error fetching schools" });
 //   }
 // };

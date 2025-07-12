@@ -9,9 +9,6 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 
-// app.get('/api/protected', require('./middleware/verifyToken'), (req, res) => {
-//   res.json({ message: `Hello ${req.user.id}, this is protected!` });
-// });
 
 app.get("/", (req, res) => {
   res.send("Welcome to Evaldemy API");

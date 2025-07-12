@@ -21,6 +21,7 @@ router.post(
   upload.single("teachersFile"),
   authController.inviteTeachers
 );
+// router.post("/admin/inviteTeachers", verifyToken, authController.inviteTeachers);
 
 // Login route
 router.post("/login", authController.handleLogin);
@@ -29,7 +30,11 @@ router.post("/login", authController.handleLogin);
 router.put("/teacher/Setup", verifyToken, authController.updateTeacherInfo);
 
 // Teacher account setup route
-router.post("/teacher/subjectSetup", verifyToken, authController.teacherSubjectSetup);
+router.post(
+  "/teacher/subjectSetup",
+  verifyToken,
+  authController.teacherSubjectSetup
+);
 
 // Add Students route
 router.post(

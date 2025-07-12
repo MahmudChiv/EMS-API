@@ -31,7 +31,7 @@ exports.verifyToken = async (req, res, next) => {
 
     next(); // Proceed to the next middleware or route handler
   } catch (error) {
-    console.error("JWT verification error:", error);
-    return res.status(401).json({ message: "Invalid access token" });
+    console.log("JWT verification error:", error);
+    return res.status(401).json({error, message: "Invalid access token" });
   }
 };
