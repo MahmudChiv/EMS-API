@@ -48,10 +48,10 @@ const Admin = sequelize.define("Admin", {
 
 // Associations
 Admin.associate = (models) => {
-    Admin.belongsTo(models.School, {
-        foreignKey: "schoolId",
-        as: "school",
-    });
+  Admin.belongsTo(models.School, {
+    foreignKey: "schoolId",
+    as: "school",
+  });
 };
 
 // Sync the model with the database

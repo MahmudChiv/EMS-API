@@ -343,13 +343,3 @@ const handleStudentLogin = async (email, password, res) => {
     message: "Student login not implemented yet",
   });
 };
-
-// exports.getSchools = async (req, res) => {
-//   try {
-//     const schools = await School.findAll();
-//     return res.status(200).json(schools);
-//   } catch (error) {
-//     console.log("Error fetching schools:", error);
-//     return res.status(500).json({ message: "Error fetching schools" });
-//   }
-// };

@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
-const multer = require("multer");
 const { verifyToken } = require("../middleware/verifyToken");
+const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
 
 // Register school route
@@ -21,7 +21,6 @@ router.post(
   upload.single("teachersFile"),
   authController.inviteTeachers
 );
-// router.post("/admin/inviteTeachers", verifyToken, authController.inviteTeachers);
 
 // Login route
 router.post("/login", authController.handleLogin);
